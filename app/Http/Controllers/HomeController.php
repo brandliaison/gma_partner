@@ -24,6 +24,8 @@ class HomeController extends Controller
         $data['blogs'] = Blog::where('status', 'active')->select('_id', 'name', 'description', 'image_url', 'slug', 'status')->orderBy('created_at', 'desc')->get();
 
         return response()->json(['data' => $data], 200);
+
+        
     }
 
     public function headerFooter()
