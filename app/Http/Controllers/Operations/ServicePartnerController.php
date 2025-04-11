@@ -7,19 +7,25 @@ use App\Mail\ServicePartnerApprovalMail;
 use App\Models\ServicePartner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class ServicePartnerController extends Controller
 {
     public function index()
     {
-        $data = ServicePartner::get();
+        try {
+            $data = ServicePartner::get();
 
-        if (!count($data) > 0) {
-            return response()->json(['data' => [], 'message' => 'Data Not Found'], 200);
+            if (!count($data) > 0) {
+                return response()->json(['data' => [], 'message' => 'Data Not Found'], 200);
+            }
+
+            return response()->json($data, 200);
+        } catch (\Exception $e) {
+            Log::error('Error fetching service partners: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch service partners.'], 500);
         }
-
-        return response()->json(['data' => $data, 'message' => 'Data Found'], 200);
     }
 
     public function show($id)
@@ -32,7 +38,7 @@ class ServicePartnerController extends Controller
         $data->makeVisible(['aadhar_details', 'aadhar_number', 'gst_details', 'gst_number']);
         $data->skills = $data->getSkillsWithServices();
 
-        return response()->json(['data' => $data, 'message' => 'Data Found'], 200);
+        return response()->json($data, 200);
     }
 
     public function approve($id)
@@ -57,8 +63,8 @@ class ServicePartnerController extends Controller
             }
 
             // Send Email Notification
-            Mail::to($data->email)->send(new ServicePartnerApprovalMail($data->toArray()));
-            return response()->json(['data' => ServicePartner::find($id), 'message' => 'Data Updated'], 200);
+            // Mail::to($data->email)->send(new ServicePartnerApprovalMail($data->toArray()));
+            return response()->json(ServicePartner::find($id), 200);
         } else {
             return response()->json(['data' => [], 'message' => 'Something went wrong'], 401);
         }
@@ -78,7 +84,7 @@ class ServicePartnerController extends Controller
         if ($update) {
 
             Mail::to($data->email)->send(new ServicePartnerApprovalMail($data->toArray()));
-            return response()->json(['data' => ServicePartner::find($id), 'message' => 'Data Updated'], 200);
+            return response()->json(ServicePartner::find($id), 200);
         } else {
             return response()->json(['data' => [], 'message' => 'Something went wrong'], 401);
         }
